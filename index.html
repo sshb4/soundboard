@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soundboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Soundboard</h1>
+        </header>
+
+        <main class="soundboard">
+            <div class="sound-grid">
+                <!-- Sound buttons will go here -->
+                <button class="sound-btn" data-sound="sound1">
+                    <span class="sound-title">Vine Boom</span>
+                </button>
+                <button class="sound-btn" data-sound="sound2">
+                    <span class="sound-title">Coming soon</span>
+                </button>
+                <button class="sound-btn" data-sound="sound3">
+                    <span class="sound-title">Coming soon</span>
+                </button>
+                <button class="sound-btn" data-sound="sound4">
+                    <span class="sound-title">Coming soon</span>
+                </button>
+                <button class="sound-btn" data-sound="sound5">
+                    <span class="sound-title">Coming soon</span>
+                </button>
+                <button class="sound-btn" data-sound="sound6">
+                    <span class="sound-title">Coming soon</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Soundboard functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const soundButtons = document.querySelectorAll('.sound-btn');
+            let currentlyPlaying = []; // Track currently playing sounds
+
+            // Sound files mapping - you can customize these
+            const soundFiles = {
+                'sound1': 'sounds/vine-boom-sound-effect.mp3',
+                'sound2': 'sounds/sound2.mp3',
+                'sound3': 'sounds/sound3.mp3',
+                'sound4': 'sounds/sound4.mp3',
+                'sound5': 'sounds/sound5.mp3',
+                'sound6': 'sounds/sound6.mp3',
+                'sound7': 'sounds/sound7.mp3',
+                'sound8': 'sounds/sound8.mp3',
+                'sound9': 'sounds/sound9.mp3',
+                'sound10': 'sounds/sound10.mp3',
+                'sound11': 'sounds/sound11.mp3',
+                'sound12': 'sounds/sound12.mp3'
+            };
+
+            // Preload audio objects for better performance
+            const audioObjects = {};
+            Object.keys(soundFiles).forEach(soundId => {
+                audioObjects[soundId] = new Audio(soundFiles[soundId]);
+                audioObjects[soundId].preload = 'auto';
+                
+                // Handle audio end event
+                audioObjects[soundId].addEventListener('ended', function() {
+                    const button = document.querySelector(`[data-sound="${soundId}"]`);
+                    if (button) {
+                        button.classList.remove('playing');
+                    }
+                    // Remove from currently playing array
+                    currentlyPlaying = currentlyPlaying.filter(audio => audio !== this);
+                });
+
+                // Handle audio error
+                audioObjects[soundId].addEventListener('error', function(e) {
+                    console.warn(`Could not load sound: ${soundFiles[soundId]}`);
+                    const button = document.querySelector(`[data-sound="${soundId}"]`);
+                    if (button) {
+                        button.classList.remove('playing');
+                        button.style.opacity = '0.5'; // Visual indication of broken audio
+                    }
+                });
+            });
+
+            // Sound button click handlers
+            soundButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const soundId = this.getAttribute('data-sound');
+                    const audio = audioObjects[soundId];
+
+                    if (!audio) {
+                        console.error(`Audio not found for: ${soundId}`);
+                        return;
+                    }
+
+                    try {
+                        // If already playing, stop it
+                        if (this.classList.contains('playing')) {
+                            audio.pause();
+                            audio.currentTime = 0;
+                            this.classList.remove('playing');
+                            currentlyPlaying = currentlyPlaying.filter(a => a !== audio);
+                        } else {
+                            // Play the sound
+                            audio.currentTime = 0; // Reset to beginning
+                            audio.play().then(() => {
+                                this.classList.add('playing');
+                                currentlyPlaying.push(audio);
+                            }).catch(error => {
+                                console.error('Error playing sound:', error);
+                                // Some browsers require user interaction first
+                                alert('Click anywhere on the page first, then try again. (Browser security requirement)');
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error with audio:', error);
+                    }
+                });
+            });
+
+            // Stop all sounds function (can be called from console or added to UI later)
+            window.stopAllSounds = function() {
+                currentlyPlaying.forEach(audio => {
+                    audio.pause();
+                    audio.currentTime = 0;
+                });
+                currentlyPlaying = [];
+                soundButtons.forEach(btn => btn.classList.remove('playing'));
+            };
+
+            // Keyboard shortcuts (optional)
+            document.addEventListener('keydown', function(e) {
+                // Press 1-9, 0, -, = for sounds 1-12
+                const keyMap = {
+                    '1': 'sound1', '2': 'sound2', '3': 'sound3', '4': 'sound4',
+                    '5': 'sound5', '6': 'sound6', '7': 'sound7', '8': 'sound8',
+                    '9': 'sound9', '0': 'sound10', '-': 'sound11', '=': 'sound12'
+                };
+                
+                if (keyMap[e.key]) {
+                    const button = document.querySelector(`[data-sound="${keyMap[e.key]}"]`);
+                    if (button) {
+                        button.click();
+                    }
+                }
+                
+                // Space bar to stop all sounds
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    window.stopAllSounds();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
